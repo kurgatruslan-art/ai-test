@@ -1,0 +1,663 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Миллионер ИИ — тест для учителей</title>
+<style>
+  :root{
+    --accent:#5b8cff;
+    --accent2:#8b5cf6;
+    --ok:#28c76f;
+    --bad:#ff4d6d;
+    --txt:#e9eeff;
+    --muted:#93a0c8;
+  }
+  *{box-sizing:border-box;margin:0;padding:0;}
+  body{
+    min-height:100vh;
+    display:flex;align-items:center;justify-content:center;
+    padding:20px;
+    font-family:"Segoe UI",Roboto,Arial,sans-serif;
+    color:var(--txt);
+    background:
+      radial-gradient(1200px 600px at 10% 0%, #1d2f7a 0%, transparent 60%),
+      radial-gradient(900px 500px at 100% 100%, #4a1d7a 0%, transparent 60%),
+      #070b1f;
+    background-attachment:fixed;
+  }
+  .screen{display:none;width:100%;justify-content:center;}
+  .screen.active{display:flex;}
+
+  .card{
+    width:min(940px,100%);
+    background:rgba(20,28,66,.85);
+    border:1px solid rgba(120,150,255,.18);
+    border-radius:24px;
+    padding:28px;
+    box-shadow:0 30px 80px rgba(0,0,0,.55), inset 0 1px 0 rgba(255,255,255,.06);
+    backdrop-filter:blur(14px);
+    animation:pop .35s ease;
+  }
+  @keyframes pop{from{opacity:0;transform:translateY(14px) scale(.985)}to{opacity:1;transform:none}}
+
+  /* ---------- СТАРТ ---------- */
+  h1{
+    font-size:clamp(26px,4vw,38px);
+    background:linear-gradient(90deg,#3ddc97,#5b8cff,#8b5cf6);
+    -webkit-background-clip:text;background-clip:text;color:transparent;
+    text-align:center;
+  }
+  .sub{text-align:center;color:var(--muted);margin-top:8px;font-size:15px;}
+  .start-grid{
+    display:grid;grid-template-columns:220px 1fr;gap:26px;align-items:center;margin-top:24px;
+  }
+  @media(max-width:640px){.start-grid{grid-template-columns:1fr;justify-items:center;text-align:center;}}
+  .qr-box{display:flex;flex-direction:column;align-items:center;gap:10px;}
+  .qr-frame{background:#fff;padding:10px;border-radius:16px;box-shadow:0 10px 30px rgba(0,0,0,.45);}
+  .qr-frame img{display:block;width:180px;height:180px;border-radius:8px;}
+  .qr-caption{font-size:12.5px;color:var(--muted);line-height:1.4;text-align:center;}
+  .join-box{display:flex;flex-direction:column;gap:14px;}
+  .join-box label{font-size:14px;color:var(--muted);font-weight:600;}
+  input[type=text]{
+    width:100%;padding:14px 16px;border-radius:14px;
+    border:1px solid rgba(120,150,255,.3);
+    background:rgba(255,255,255,.06);color:var(--txt);
+    font-size:16px;outline:none;transition:.2s;font-family:inherit;
+  }
+  input[type=text]::placeholder{color:#6b78a3;}
+  input[type=text]:focus{border-color:var(--accent);box-shadow:0 0 0 3px rgba(91,140,255,.2);}
+  .btn{
+    border:none;cursor:pointer;padding:14px 22px;border-radius:14px;
+    font-size:16px;font-weight:700;transition:.2s;font-family:inherit;
+  }
+  .btn.primary{
+    background:linear-gradient(135deg,#5b8cff,#8b5cf6);color:#fff;
+    box-shadow:0 10px 30px rgba(91,140,255,.35);
+  }
+  .btn.primary:hover{transform:translateY(-2px);box-shadow:0 14px 34px rgba(91,140,255,.5);}
+  .btn.ghost{background:rgba(255,255,255,.06);color:var(--txt);border:1px solid rgba(120,150,255,.25);}
+  .btn.ghost:hover{background:rgba(255,255,255,.12);}
+  .rules{font-size:13px;color:var(--muted);line-height:1.5;}
+  .err{color:#ff8095;font-size:14px;min-height:18px;text-align:center;margin-top:12px;}
+
+  /* ---------- ТЕСТ ---------- */
+  .quiz-head{
+    display:flex;justify-content:space-between;align-items:center;
+    gap:12px;flex-wrap:wrap;font-size:14px;color:var(--muted);font-weight:600;
+  }
+  .quiz-head .q-score{color:#ffd166;}
+  .q-player{color:#3ddc97;}
+  .timer-wrap{display:flex;align-items:center;gap:12px;margin:14px 0 20px;}
+  .timer-track{flex:1;height:10px;border-radius:99px;background:rgba(255,255,255,.08);overflow:hidden;}
+  .timer-bar{
+    height:100%;width:100%;border-radius:99px;
+    background:linear-gradient(90deg,#3ddc97,#5b8cff);
+    transition:width .1s linear, background .3s;
+  }
+  .timer-bar.low{background:linear-gradient(90deg,#ff9a3c,#ff4d6d);}
+  .timer-num{font-weight:800;min-width:56px;text-align:right;font-variant-numeric:tabular-nums;font-size:16px;}
+  .timer-num.low{color:#ff8095;}
+  .q-text{font-size:clamp(17px,2.3vw,22px);line-height:1.45;margin-bottom:20px;}
+  .options{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
+  @media(max-width:760px){.options{grid-template-columns:1fr;}}
+  .option{
+    display:flex;align-items:center;gap:12px;text-align:left;
+    padding:14px 16px;border-radius:14px;cursor:pointer;
+    background:rgba(255,255,255,.05);
+    border:1px solid rgba(120,150,255,.22);
+    color:var(--txt);font-size:15px;line-height:1.35;font-family:inherit;
+    transition:.18s;
+  }
+  .option:hover:not(:disabled){background:rgba(91,140,255,.18);border-color:var(--accent);transform:translateY(-2px);}
+  .option .letter{
+    flex:0 0 30px;height:30px;border-radius:50%;
+    display:grid;place-items:center;font-weight:800;font-size:14px;
+    background:linear-gradient(135deg,var(--accent),var(--accent2));
+  }
+  .option.correct{background:rgba(40,199,111,.22);border-color:var(--ok);}
+  .option.correct .letter{background:var(--ok);}
+  .option.wrong{background:rgba(255,77,109,.2);border-color:var(--bad);}
+  .option.wrong .letter{background:var(--bad);}
+  .option:disabled{cursor:default;}
+  .feedback{margin-top:16px;font-size:15px;line-height:1.45;min-height:22px;font-weight:600;}
+  .feedback.ok{color:#3ddc97;}
+  .feedback.bad{color:#ff8095;}
+  .feedback.timeout{color:#ffb454;}
+
+  /* ---------- ФИНАЛ ---------- */
+  .end-title{text-align:center;font-size:clamp(22px,3vw,30px);margin-bottom:18px;}
+  .my-result{
+    display:flex;align-items:center;gap:22px;flex-wrap:wrap;justify-content:center;
+    padding:18px;border-radius:18px;margin-bottom:24px;
+    background:rgba(91,140,255,.1);border:1px solid rgba(120,150,255,.25);
+  }
+  .my-name{font-size:18px;font-weight:700;}
+  .my-score{
+    font-size:38px;font-weight:800;
+    background:linear-gradient(90deg,#3ddc97,#5b8cff);
+    -webkit-background-clip:text;background-clip:text;color:transparent;
+  }
+  .my-score .of{
+    font-size:16px;font-weight:700;margin-left:6px;
+    -webkit-text-fill-color:var(--muted);color:var(--muted);
+  }
+  .my-rank{font-size:15px;color:#ffd166;font-weight:600;}
+  .chart-title{font-size:16px;color:var(--muted);margin-bottom:14px;font-weight:600;}
+  .chart{max-height:420px;overflow-y:auto;padding-right:6px;}
+  .chart::-webkit-scrollbar{width:8px;}
+  .chart::-webkit-scrollbar-thumb{background:rgba(120,150,255,.35);border-radius:8px;}
+  .bar-row{
+    display:grid;grid-template-columns:160px 1fr 64px;gap:12px;align-items:center;
+    margin-bottom:10px;
+  }
+  @media(max-width:600px){.bar-row{grid-template-columns:100px 1fr 48px;gap:8px;}}
+  .bar-name{font-size:14px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+  .bar-track{height:26px;background:rgba(255,255,255,.07);border-radius:8px;overflow:hidden;}
+  .bar-fill{
+    height:100%;width:0;border-radius:8px;
+    background:linear-gradient(90deg,#5b8cff,#8b5cf6);
+    transition:width .9s cubic-bezier(.2,.8,.2,1);
+  }
+  .bar-row.me .bar-fill{background:linear-gradient(90deg,#3ddc97,#5b8cff);}
+  .bar-row.me .bar-name{color:#3ddc97;font-weight:700;}
+  .bar-val{text-align:right;font-weight:800;font-variant-numeric:tabular-nums;font-size:14px;}
+  .end-actions{display:flex;gap:12px;justify-content:center;flex-wrap:wrap;margin-top:24px;}
+  .muted{color:var(--muted);text-align:center;padding:18px;}
+</style>
+</head>
+<body>
+
+<!-- ================= ЭКРАН 1: СТАРТ ================= -->
+<section id="screen-start" class="screen active">
+  <div class="card">
+    <h1>🧠 Миллионер ИИ</h1>
+    <p class="sub">Интерактивный тест для педагогов · 10 вопросов · 10 секунд на ответ</p>
+
+    <div class="start-grid">
+      <div class="qr-box">
+        <div class="qr-frame">
+          <img id="qrImg" alt="QR-код для входа в тест">
+        </div>
+        <p class="qr-caption">Наведите камеру телефона,<br>чтобы открыть тест</p>
+      </div>
+
+      <div class="join-box">
+        <label for="nickname">Ваш никнейм</label>
+        <input id="nickname" type="text" maxlength="20" placeholder="Например, Гузель Р." autocomplete="off">
+        <button id="startBtn" class="btn primary">Начать игру ▶</button>
+        <p class="rules">
+          Правильный ответ — <b>+10 баллов</b>. Максимум — <b>100 баллов</b>.<br>
+          Не успели за 10 секунд — балл не начисляется.
+        </p>
+      </div>
+    </div>
+    <p class="err" id="startErr"></p>
+  </div>
+</section>
+
+<!-- ================= ЭКРАН 2: ВОПРОСЫ ================= -->
+<section id="screen-quiz" class="screen">
+  <div class="card">
+    <div class="quiz-head">
+      <div class="q-num">Вопрос <span id="qNum">1</span> / 10</div>
+      <div class="q-score">Баллы: <span id="scoreNow">0</span></div>
+      <div class="q-player" id="playerName"></div>
+    </div>
+
+    <div class="timer-wrap">
+      <div class="timer-track"><div class="timer-bar" id="timerBar"></div></div>
+      <div class="timer-num" id="timerNum">10 с</div>
+    </div>
+
+    <h2 class="q-text" id="qText"></h2>
+    <div class="options" id="options"></div>
+    <div class="feedback" id="feedback"></div>
+  </div>
+</section>
+
+<!-- ================= ЭКРАН 3: РЕЗУЛЬТАТЫ ================= -->
+<section id="screen-end" class="screen">
+  <div class="card">
+    <h2 class="end-title">🏁 Игра завершена!</h2>
+
+    <div class="my-result">
+      <div class="my-name" id="myName">—</div>
+      <div class="my-score"><span id="myScore">0</span><span class="of">/ 100</span></div>
+      <div class="my-rank" id="myRank">—</div>
+    </div>
+
+    <h3 class="chart-title">📊 Рейтинг участников (по убыванию баллов)</h3>
+    <div class="chart" id="chart"></div>
+
+    <div class="end-actions">
+      <button class="btn primary" id="againBtn">🔄 Пройти ещё раз</button>
+      <button class="btn ghost" id="resetBtn">🗑 Сбросить результаты</button>
+    </div>
+  </div>
+</section>
+
+<script>
+/* =====================================================================
+   1. БАНК ВОПРОСОВ (можно дополнять и редактировать)
+   correct — индекс правильного варианта в исходном массиве options
+   ===================================================================== */
+const QUESTIONS = [
+  {
+    q: "Что такое искусственный интеллект (ИИ)?",
+    options: [
+      "Системы, способные выполнять задачи, обычно требующие человеческого интеллекта",
+      "Любой компьютер, подключённый к интернету",
+      "База данных с готовыми ответами на все вопросы",
+      "Устройство для увеличения частоты процессора"
+    ],
+    correct: 0,
+    hint: "ИИ — область информатики: системы учатся, рассуждают и принимают решения."
+  },
+  {
+    q: "Что означает аббревиатура ML?",
+    options: [
+      "Машинное обучение (Machine Learning)",
+      "Мультиязычность (Multi Language)",
+      "Микрологика (Micro Logic)",
+      "Массовые ссылки (Mega Link)"
+    ],
+    correct: 0,
+    hint: "ML — раздел ИИ: модель учится на данных, а не работает по жёстким правилам."
+  },
+  {
+    q: "Что такое нейросеть?",
+    options: [
+      "Модель из связанных слоёв искусственных нейронов, обучаемая на данных",
+      "Система кабелей для соединения компьютеров",
+      "База данных для хранения оценок учеников",
+      "Плагин для ускорения интернета"
+    ],
+    correct: 0,
+    hint: "Нейросеть — слои искусственных нейронов, которые находят закономерности в данных."
+  },
+  {
+    q: "Какую задачу решает ChatGPT?",
+    options: [
+      "Генерирует текст в ответ на запрос пользователя",
+      "Монтирует видеоролики",
+      "Строит карты по координатам",
+      "Тестирует сетевой кабель"
+    ],
+    correct: 0,
+    hint: "ChatGPT — большая языковая модель: отвечает на вопросы, пишет и сокращает тексты."
+  },
+  {
+    q: "Что такое обучение с учителем (supervised learning)?",
+    options: [
+      "Обучение на размеченных примерах, где известен правильный ответ",
+      "Самостоятельная работа ученика без данных",
+      "Обучение без всяких данных",
+      "ИИ, которым пользуется только учитель"
+    ],
+    correct: 0,
+    hint: "В обучении с учителем модели показывают пары «вход — правильный ответ»."
+  },
+  {
+    q: "Что такое промпт (prompt)?",
+    options: [
+      "Текстовый запрос или инструкция, которую пользователь даёт ИИ-модели",
+      "Пароль для включения компьютера",
+      "Имя файла с данными",
+      "Быстро мигающий курсор на экране"
+    ],
+    correct: 0,
+    hint: "Промпт — задание для ИИ: чем точнее формулировка, тем лучше результат."
+  },
+  {
+    q: "Что НЕ является примером генеративного ИИ?",
+    options: [
+      "Обычный калькулятор с экраном",
+      "Нейросеть, создающая изображения по описанию",
+      "Чат-бот, пишущий текст по запросу",
+      "Модель, сочиняющая музыку по тексту"
+    ],
+    correct: 0,
+    hint: "Калькулятор считает по фиксированным правилам и не создаёт нового контента."
+  },
+  {
+    q: "Что такое «галлюцинация» ИИ?",
+    options: [
+      "Уверенный, но не соответствующий фактам ответ модели",
+      "Мерцание монитора во время работы",
+      "Шум вентилятора компьютера",
+      "Режим ускорения работы модели"
+    ],
+    correct: 0,
+    hint: "Галлюцинация — модель выдумывает факты, цитаты и ссылки. Всё нужно проверять!"
+  },
+  {
+    q: "Что такое генеративный ИИ?",
+    options: [
+      "ИИ, создающий новый контент: текст, изображения, звук, видео",
+      "ИИ, который только складывает числа",
+      "Система передачи электроэнергии",
+      "Офлайн-база данных без интернета"
+    ],
+    correct: 0,
+    hint: "Генеративные модели создают новое содержание, а не выбирают готовое из базы."
+  },
+  {
+    q: "Что важно делать учителю при использовании ИИ в образовании?",
+    options: [
+      "Проверять факты и соблюдать нормы академической честности",
+      "Доверять любому ответу ИИ без проверки",
+      "Использовать ответы ИИ как единственный источник",
+      "Скрывать от учеников факт использования ИИ-инструментов"
+    ],
+    correct: 0,
+    hint: "ИИ — помощник: факты проверяем, персональные данные защищаем, честность соблюдаем."
+  }
+];
+
+/* =====================================================================
+   2. КОНСТАНТЫ И ХРАНИЛИЩЕ
+   ===================================================================== */
+const STORAGE_KEY   = 'ai_millionaire_results_v1';
+const TIME_PER_Q    = 10;   // секунд на вопрос
+const POINTS        = 10;   // баллов за верный ответ
+const LETTERS       = ['A','B','C','D'];
+
+let memoryResults = [];     // резерв, если localStorage недоступен
+let timerId = null;
+let state = {};
+
+const $ = sel => document.querySelector(sel);
+
+function esc(s){
+  return String(s).replace(/[&<>"']/g, c =>
+    ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+}
+
+function loadResults(){
+  try{
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if (raw !== null) return JSON.parse(raw) || [];
+  }catch(e){}
+  return memoryResults;
+}
+
+function saveResult(name, score, total){
+  const res = { name, score, total, date: new Date().toISOString() };
+  const list = loadResults();
+  list.push(res);
+  try{
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(list));
+  }catch(e){
+    memoryResults = list;
+  }
+  return res;
+}
+
+/* =====================================================================
+   3. QR-КОД НА ПЕРВОМ СЛАЙДЕ
+   ===================================================================== */
+(function initQR(){
+  const img = document.getElementById('qrImg');
+  const url = location.href.split('#')[0];
+  img.src = 'https://api.qrserver.com/v1/create-qr-code/?size=200x200&margin=8&data='
+            + encodeURIComponent(url);
+  img.onerror = function(){
+    // Если интернета нет — показываем понятную заглушку
+    const frame = this.parentElement;
+    frame.innerHTML = '<div style="width:180px;height:180px;display:grid;place-items:center;'
+                    + 'text-align:center;color:#333;font:600 13px/1.4 sans-serif;">'
+                    + 'QR-код<br>недоступен<br><br>Откройте тест<br>по ссылке</div>';
+  };
+})();
+
+/* =====================================================================
+   4. ПОДГОТОВКА ВОПРОСОВ (перемешивание вариантов ответа)
+   ===================================================================== */
+function prepare(q){
+  const opts = q.options.map((t, i) => ({ text: t, correct: i === q.correct }));
+  for (let i = opts.length - 1; i > 0; i--){
+    const j = Math.floor(Math.random() * (i + 1));
+    [opts[i], opts[j]] = [opts[j], opts[i]];
+  }
+  return { q: q.q, hint: q.hint, options: opts };
+}
+
+/* =====================================================================
+   5. НАВИГАЦИЯ МЕЖДУ ЭКРАНАМИ
+   ===================================================================== */
+function show(id){
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+}
+
+/* =====================================================================
+   6. СТАРТ ИГРЫ
+   ===================================================================== */
+$('#startBtn').addEventListener('click', startGame);
+$('#nickname').addEventListener('keydown', e => { if (e.key === 'Enter') startGame(); });
+
+function startGame(){
+  const name = $('#nickname').value.trim();
+  if (name.length < 2){
+    $('#startErr').textContent = 'Введите никнейм (минимум 2 символа)';
+    return;
+  }
+  $('#startErr').textContent = '';
+
+  state = {
+    nickname: name,
+    score: 0,
+    qIndex: 0,
+    locked: false,
+    myDate: null,
+    quiz: QUESTIONS.map(prepare)
+  };
+
+  $('#playerName').textContent = '👤 ' + name;
+  $('#scoreNow').textContent = '0';
+  show('screen-quiz');
+  renderQuestion();
+}
+
+/* =====================================================================
+   7. ОТРИСОВКА ВОПРОСА + ТАЙМЕР
+   ===================================================================== */
+function renderQuestion(){
+  if (state.qIndex >= state.quiz.length){ finish(); return; }
+
+  const item = state.quiz[state.qIndex];
+  state.locked = false;
+
+  $('#qNum').textContent = state.qIndex + 1;
+  $('#qText').textContent = item.q;
+
+  const box = $('#options');
+  box.innerHTML = '';
+  item.options.forEach((opt, i) => {
+    const btn = document.createElement('button');
+    btn.className = 'option';
+    btn.type = 'button';
+
+    const letter = document.createElement('span');
+    letter.className = 'letter';
+    letter.textContent = LETTERS[i];
+
+    const text = document.createElement('span');
+    text.className = 'opt-text';
+    text.textContent = opt.text;
+
+    btn.append(letter, text);
+    btn.addEventListener('click', () => answer(i));
+    box.appendChild(btn);
+  });
+
+  const fb = $('#feedback');
+  fb.textContent = '';
+  fb.className = 'feedback';
+
+  startTimer();
+}
+
+function startTimer(){
+  clearInterval(timerId);
+  let remaining = TIME_PER_Q;
+
+  const bar = $('#timerBar');
+  const num = $('#timerNum');
+
+  bar.style.width = '100%';
+  bar.classList.remove('low');
+  num.classList.remove('low');
+  num.textContent = TIME_PER_Q + ' с';
+
+  timerId = setInterval(() => {
+    remaining -= 0.1;
+    if (remaining < 0) remaining = 0;
+
+    bar.style.width = (remaining / TIME_PER_Q * 100) + '%';
+    num.textContent = Math.ceil(remaining) + ' с';
+
+    if (remaining <= 3){
+      bar.classList.add('low');
+      num.classList.add('low');
+    }
+    if (remaining <= 0){
+      clearInterval(timerId);
+      answer(-1);          // время вышло
+    }
+  }, 100);
+}
+
+/* =====================================================================
+   8. ОБРАБОТКА ОТВЕТА
+   ===================================================================== */
+function answer(selected){
+  if (state.locked) return;
+  state.locked = true;
+  clearInterval(timerId);
+
+  const item = state.quiz[state.qIndex];
+  const correctIndex = item.options.findIndex(o => o.correct);
+  const btns = document.querySelectorAll('#options .option');
+
+  btns.forEach((b, i) => {
+    b.disabled = true;
+    if (item.options[i].correct) b.classList.add('correct');
+    if (i === selected && !item.options[i].correct) b.classList.add('wrong');
+  });
+
+  const fb = $('#feedback');
+  let delay = 2200;
+
+  if (selected === correctIndex){
+    state.score += POINTS;
+    $('#scoreNow').textContent = state.score;
+    fb.textContent = '✅ Верно! +' + POINTS + ' баллов';
+    fb.className = 'feedback ok';
+    delay = 1200;
+  } else if (selected === -1){
+    fb.textContent = '⏰ Время вышло! ' + item.hint;
+    fb.className = 'feedback timeout';
+  } else {
+    fb.textContent = '❌ Неверно. ' + item.hint;
+    fb.className = 'feedback bad';
+  }
+
+  setTimeout(() => {
+    state.qIndex++;
+    renderQuestion();
+  }, delay);
+}
+
+/* =====================================================================
+   9. ФИНАЛ И ПОСТРОЕНИЕ ГИСТОГРАММЫ
+   ===================================================================== */
+function finish(){
+  clearInterval(timerId);
+  const total = state.quiz.length * POINTS;
+  const res = saveResult(state.nickname, state.score, total);
+  state.myDate = res.date;
+  renderEnd();
+  show('screen-end');
+}
+
+function rankTitle(pct){
+  if (pct === 100) return '🏆 Эксперт по ИИ — безупречно!';
+  if (pct >= 80)   return '🎓 Уверенный уровень — отличный результат!';
+  if (pct >= 60)   return '👍 Базовый уровень — есть куда расти';
+  return '📚 Начинающий уровень — повторите основы ИИ';
+}
+
+function renderEnd(){
+  const total = state.quiz.length * POINTS;
+  const pct = Math.round(state.score / total * 100);
+
+  $('#myName').textContent = '👤 ' + state.nickname;
+  $('#myScore').textContent = state.score;
+  $('#myRank').textContent = rankTitle(pct);
+
+  const results = loadResults();
+  const sorted = [...results].sort((a, b) =>
+    b.score - a.score || new Date(a.date) - new Date(b.date)
+  );
+
+  const chart = $('#chart');
+  chart.innerHTML = '';
+
+  if (!sorted.length){
+    chart.innerHTML = '<p class="muted">Пока нет результатов</p>';
+    return;
+  }
+
+  const maxScore = Math.max(POINTS, ...sorted.map(r => r.score));
+
+  sorted.forEach((r, i) => {
+    const medal = i === 0 ? '🥇' : i === 1 ? '🥈' : i === 2 ? '🥉' : (i + 1) + '.';
+
+    const row = document.createElement('div');
+    row.className = 'bar-row' + (r.date === state.myDate ? ' me' : '');
+
+    const nameEl = document.createElement('div');
+    nameEl.className = 'bar-name';
+    nameEl.title = r.name;
+    nameEl.textContent = medal + ' ' + r.name;
+
+    const track = document.createElement('div');
+    track.className = 'bar-track';
+    const fill = document.createElement('div');
+    fill.className = 'bar-fill';
+    track.appendChild(fill);
+
+    const val = document.createElement('div');
+    val.className = 'bar-val';
+    val.textContent = r.score;
+
+    row.append(nameEl, track, val);
+    chart.appendChild(row);
+
+    // Анимация роста столбца
+    const widthPct = Math.max(3, (r.score / maxScore) * 100);
+    requestAnimationFrame(() => {
+      requestAnimationFrame(() => { fill.style.width = widthPct + '%'; });
+    });
+  });
+}
+
+/* =====================================================================
+   10. КНОПКИ НА ФИНАЛЬНОМ ЭКРАНЕ
+   ===================================================================== */
+$('#againBtn').addEventListener('click', () => {
+  $('#nickname').value = state.nickname || '';
+  show('screen-start');
+});
+
+$('#resetBtn').addEventListener('click', () => {
+  if (!confirm('Удалить результаты всех участников?')) return;
+  try{ localStorage.removeItem(STORAGE_KEY); }catch(e){}
+  memoryResults = [];
+  renderEnd();
+});
+</script>
+</body>
+</html>
